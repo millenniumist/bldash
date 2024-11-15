@@ -1,0 +1,1982 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model BATCH_JOB_EXECUTION {
+  JOB_EXECUTION_ID            BigInt                       @id
+  VERSION                     BigInt?
+  JOB_INSTANCE_ID             BigInt
+  CREATE_TIME                 DateTime                     @db.DateTime(0)
+  START_TIME                  DateTime?                    @db.DateTime(0)
+  END_TIME                    DateTime?                    @db.DateTime(0)
+  STATUS                      String?                      @db.VarChar(10)
+  EXIT_CODE                   String?                      @db.VarChar(2500)
+  EXIT_MESSAGE                String?                      @db.VarChar(2500)
+  LAST_UPDATED                DateTime?                    @db.DateTime(0)
+  JOB_CONFIGURATION_LOCATION  String?                      @db.VarChar(2500)
+  BATCH_JOB_INSTANCE          BATCH_JOB_INSTANCE           @relation(fields: [JOB_INSTANCE_ID], references: [JOB_INSTANCE_ID], onUpdate: Restrict, map: "JOB_INST_EXEC_FK")
+  BATCH_JOB_EXECUTION_CONTEXT BATCH_JOB_EXECUTION_CONTEXT?
+  BATCH_JOB_EXECUTION_PARAMS  BATCH_JOB_EXECUTION_PARAMS[] @ignore
+  BATCH_STEP_EXECUTION        BATCH_STEP_EXECUTION[]
+
+  @@index([JOB_INSTANCE_ID], map: "JOB_INST_EXEC_FK")
+}
+
+model BATCH_JOB_EXECUTION_CONTEXT {
+  JOB_EXECUTION_ID    BigInt              @id
+  SHORT_CONTEXT       String              @db.VarChar(2500)
+  SERIALIZED_CONTEXT  String?             @db.Text
+  BATCH_JOB_EXECUTION BATCH_JOB_EXECUTION @relation(fields: [JOB_EXECUTION_ID], references: [JOB_EXECUTION_ID], onUpdate: Restrict, map: "JOB_EXEC_CTX_FK")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model BATCH_JOB_EXECUTION_PARAMS {
+  JOB_EXECUTION_ID    BigInt
+  TYPE_CD             String              @db.VarChar(6)
+  KEY_NAME            String              @db.VarChar(100)
+  STRING_VAL          String?             @db.VarChar(250)
+  DATE_VAL            DateTime?           @db.DateTime(0)
+  LONG_VAL            BigInt?
+  DOUBLE_VAL          Float?
+  IDENTIFYING         String              @db.Char(1)
+  BATCH_JOB_EXECUTION BATCH_JOB_EXECUTION @relation(fields: [JOB_EXECUTION_ID], references: [JOB_EXECUTION_ID], onUpdate: Restrict, map: "JOB_EXEC_PARAMS_FK")
+
+  @@index([JOB_EXECUTION_ID], map: "JOB_EXEC_PARAMS_FK")
+  @@ignore
+}
+
+model BATCH_JOB_EXECUTION_SEQ {
+  ID         BigInt
+  UNIQUE_KEY String @unique(map: "UNIQUE_KEY_UN") @db.Char(1)
+}
+
+model BATCH_JOB_INSTANCE {
+  JOB_INSTANCE_ID     BigInt                @id
+  VERSION             BigInt?
+  JOB_NAME            String                @db.VarChar(100)
+  JOB_KEY             String                @db.VarChar(32)
+  BATCH_JOB_EXECUTION BATCH_JOB_EXECUTION[]
+
+  @@unique([JOB_NAME, JOB_KEY], map: "JOB_INST_UN")
+}
+
+model BATCH_JOB_SEQ {
+  ID         BigInt
+  UNIQUE_KEY String @unique(map: "UNIQUE_KEY_UN") @db.Char(1)
+}
+
+model BATCH_STEP_EXECUTION {
+  STEP_EXECUTION_ID            BigInt                        @id
+  VERSION                      BigInt
+  STEP_NAME                    String                        @db.VarChar(100)
+  JOB_EXECUTION_ID             BigInt
+  START_TIME                   DateTime                      @db.DateTime(0)
+  END_TIME                     DateTime?                     @db.DateTime(0)
+  STATUS                       String?                       @db.VarChar(10)
+  COMMIT_COUNT                 BigInt?
+  READ_COUNT                   BigInt?
+  FILTER_COUNT                 BigInt?
+  WRITE_COUNT                  BigInt?
+  READ_SKIP_COUNT              BigInt?
+  WRITE_SKIP_COUNT             BigInt?
+  PROCESS_SKIP_COUNT           BigInt?
+  ROLLBACK_COUNT               BigInt?
+  EXIT_CODE                    String?                       @db.VarChar(2500)
+  EXIT_MESSAGE                 String?                       @db.VarChar(2500)
+  LAST_UPDATED                 DateTime?                     @db.DateTime(0)
+  BATCH_JOB_EXECUTION          BATCH_JOB_EXECUTION           @relation(fields: [JOB_EXECUTION_ID], references: [JOB_EXECUTION_ID], onUpdate: Restrict, map: "JOB_EXEC_STEP_FK")
+  BATCH_STEP_EXECUTION_CONTEXT BATCH_STEP_EXECUTION_CONTEXT?
+
+  @@index([JOB_EXECUTION_ID], map: "JOB_EXEC_STEP_FK")
+}
+
+model BATCH_STEP_EXECUTION_CONTEXT {
+  STEP_EXECUTION_ID    BigInt               @id
+  SHORT_CONTEXT        String               @db.VarChar(2500)
+  SERIALIZED_CONTEXT   String?              @db.Text
+  BATCH_STEP_EXECUTION BATCH_STEP_EXECUTION @relation(fields: [STEP_EXECUTION_ID], references: [STEP_EXECUTION_ID], onUpdate: Restrict, map: "STEP_EXEC_CTX_FK")
+}
+
+model BATCH_STEP_EXECUTION_SEQ {
+  ID         BigInt
+  UNIQUE_KEY String @unique(map: "UNIQUE_KEY_UN") @db.Char(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model addresses {
+  id            BigInt            @id @default(autoincrement())
+  purpose       addresses_purpose
+  number        String?           @db.VarChar(20)
+  building_name String?           @db.VarChar(100)
+  soi           String?           @db.VarChar(100)
+  street        String?           @db.VarChar(100)
+  subdistrict   String            @default("") @db.VarChar(100)
+  district      String            @default("") @db.VarChar(100)
+  zip_code      String            @default("") @db.VarChar(100)
+  province      String            @default("") @db.VarChar(100)
+  country       String            @default("") @db.VarChar(100)
+  latitude      Float
+  longitude     Float
+  updated_date  DateTime?         @db.DateTime(0)
+  created_date  DateTime?         @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model available_parking_lot_spaces {
+  id                        BigInt    @id @default(autoincrement())
+  parking_lot_id            BigInt
+  available_space           Int
+  available_space_monthly   Int?
+  available_space_temporary Int?
+  updated_date              DateTime? @db.DateTime(0)
+  created_date              DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model discounts {
+  id                     BigInt                     @id @default(autoincrement())
+  parking_lot_id         BigInt
+  parking_lot_usage_id   BigInt
+  amount                 Int
+  type                   discounts_type
+  status                 discounts_status
+  applied_from           discounts_applied_from
+  applied_user           String?                    @db.VarChar(50)
+  applied_channel        discounts_applied_channel?
+  applied_channel_ref_id BigInt?
+  applied_date           DateTime                   @db.DateTime(0)
+  bill_type              discounts_bill_type?
+  bill_fee               Float?
+  start_date             DateTime?                  @db.DateTime(0)
+  expiry_date            DateTime?                  @db.DateTime(0)
+  description            String?                    @db.VarChar(100)
+  code                   String?                    @db.Char(36)
+  name                   String?                    @db.VarChar(100)
+  time_limit             Int?
+  is_unlimited           Boolean                    @default(dbgenerated("b'1'")) @db.Bit(1)
+  updated_date           DateTime?                  @db.DateTime(0)
+  created_date           DateTime?                  @db.DateTime(0)
+}
+
+model failed_jobs {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid       String   @unique(map: "failed_jobs_uuid_unique") @db.VarChar(255)
+  connection String   @db.Text
+  queue      String   @db.Text
+  payload    String   @db.LongText
+  exception  String   @db.LongText
+  failed_at  DateTime @default(now()) @db.Timestamp(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model files {
+  id           String        @id @default("") @db.VarChar(100)
+  ref_id       BigInt
+  purpose      files_purpose
+  filename     String        @default("") @db.VarChar(100)
+  type         String        @db.VarChar(20)
+  size         Int
+  url          String        @default("") @db.VarChar(256)
+  updated_date DateTime?     @db.DateTime(0)
+  created_date DateTime?     @db.DateTime(0)
+}
+
+model flyway_schema_history {
+  installed_rank Int      @id
+  version        String?  @db.VarChar(50)
+  description    String   @db.VarChar(200)
+  type           String   @db.VarChar(20)
+  script         String   @db.VarChar(1000)
+  checksum       Int?
+  installed_by   String   @db.VarChar(100)
+  installed_on   DateTime @default(now()) @db.Timestamp(0)
+  execution_time Int
+  success        Boolean
+
+  @@index([success], map: "flyway_schema_history_s_idx")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model invoice_items {
+  id                 BigInt                       @id @unique(map: "id") @default(autoincrement())
+  invoice_id         BigInt
+  parking_lot_id     BigInt
+  ref_id             BigInt
+  ref_id_2           BigInt?
+  type               invoice_items_type?
+  subtotal           Float
+  discount           Float?
+  discount_type      invoice_items_discount_type?
+  total              Float
+  tax_amount         Float
+  tax_excluded_total Float
+  updated_date       DateTime?                    @db.DateTime(0)
+  created_date       DateTime?                    @db.DateTime(0)
+  local_id           BigInt?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model invoice_transactions {
+  id                       BigInt                               @id @default(autoincrement())
+  invoice_id               BigInt
+  mobile_user_id           BigInt?
+  payment_card_id          BigInt?
+  charge_ref_id            String?                              @db.VarChar(100)
+  transaction_ref_id       String?                              @db.VarChar(100)
+  sale_ref_id              String?                              @db.VarChar(100)
+  status                   invoice_transactions_status?
+  cause                    String?                              @db.LongText
+  payment_method           invoice_transactions_payment_method?
+  amount                   Float?
+  fee                      Float?
+  fee_vat                  Float?
+  net_amount               Float?
+  payment_card_last_digits String?                              @db.VarChar(4)
+  updated_date             DateTime?                            @db.DateTime(0)
+  created_date             DateTime?                            @db.DateTime(0)
+  local_id                 BigInt?
+
+  @@index([transaction_ref_id], map: "invoice_transactions_ref_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model invoices {
+  id                    BigInt                   @id @unique(map: "id") @default(autoincrement())
+  parking_lot_id        BigInt?
+  bill_id               String?                  @db.VarChar(50)
+  subtotal              Float
+  discount              Float?
+  total                 Float
+  tax_amount            Float
+  tax_excluded_total    Float
+  payment_method        invoices_payment_method?
+  tendered_amount       Float?
+  change                Float?
+  paid_time             DateTime?                @db.DateTime(0)
+  cutoff_date           DateTime?                @db.DateTime(0)
+  latest_status         invoices_latest_status?
+  expiry_date           DateTime?                @db.DateTime(0)
+  updated_date          DateTime?                @db.DateTime(0)
+  created_date          DateTime?                @db.DateTime(0)
+  local_id              BigInt?
+  user_id               BigInt?
+  parking_lot_staff_id  BigInt?
+  location_inventory_id BigInt?
+  remark                String?                  @db.VarChar(255)
+
+  @@index([bill_id], map: "invoices_bill_id")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model laravel_password_resets {
+  email      String    @db.VarChar(255)
+  token      String    @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+
+  @@index([email], map: "laravel_password_resets_email_index")
+  @@ignore
+}
+
+model laravel_users {
+  id                BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  name              String    @db.VarChar(255)
+  email             String    @unique(map: "laravel_users_email_unique") @db.VarChar(255)
+  email_verified_at DateTime? @db.Timestamp(0)
+  password          String    @db.VarChar(255)
+  remember_token    String?   @db.VarChar(100)
+  created_at        DateTime? @db.Timestamp(0)
+  updated_at        DateTime? @db.Timestamp(0)
+}
+
+model migrations {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  migration String @db.VarChar(255)
+  batch     Int
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model mobile_devices {
+  id             String   @id @db.VarChar(50)
+  mobile_user_id BigInt
+  fcm_token      String   @db.VarChar(255)
+  is_active      Boolean  @default(dbgenerated("b'0'")) @db.Bit(1)
+  created_date   DateTime @db.DateTime(0)
+  updated_date   DateTime @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model mobile_notifications {
+  id               String    @id @db.VarChar(100)
+  mobile_user_id   BigInt
+  mobile_device_id String    @db.VarChar(50)
+  title            String?   @db.VarChar(255)
+  message          String?   @db.VarChar(2048)
+  data             Bytes?
+  read_date        DateTime? @db.DateTime(0)
+  sent_date        DateTime? @db.DateTime(0)
+  created_date     DateTime  @db.DateTime(0)
+  updated_date     DateTime  @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model mobile_users {
+  id                  BigInt   @id @default(autoincrement())
+  uuid                String   @unique(map: "uuid") @db.VarChar(100)
+  name                String?  @db.VarChar(256)
+  email               String?  @unique(map: "email") @db.VarChar(512)
+  phone_number        String?  @unique(map: "phone_number") @db.VarChar(30)
+  is_accepted_term    Boolean  @default(dbgenerated("b'0'")) @db.Bit(1)
+  enable_auto_lock    Boolean  @default(dbgenerated("b'0'")) @db.Bit(1)
+  enable_card_payment Boolean  @default(dbgenerated("b'0'")) @db.Bit(1)
+  updated_date        DateTime @db.DateTime(0)
+  created_date        DateTime @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oauth_access_token {
+  authentication_id String  @id @db.VarChar(255)
+  token_id          String? @db.VarChar(255)
+  token             Bytes?  @db.Blob
+  user_name         String? @db.VarChar(255)
+  client_id         String? @db.VarChar(255)
+  authentication    Bytes?  @db.Blob
+  refresh_token     String? @db.VarChar(255)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oauth_client_details {
+  client_id               String  @id @default("") @db.VarChar(100)
+  resource_ids            String? @db.VarChar(100)
+  client_secret           String? @db.VarChar(100)
+  scope                   String? @db.VarChar(100)
+  authorized_grant_types  String? @db.VarChar(100)
+  web_server_redirect_uri String? @db.VarChar(100)
+  authorities             String? @db.VarChar(100)
+  access_token_validity   Int?
+  refresh_token_validity  Int?
+  additional_information  String? @db.VarChar(250)
+  autoapprove             String? @db.VarChar(100)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oauth_client_token {
+  authentication_id String  @id @db.VarChar(255)
+  token_id          String? @db.VarChar(255)
+  token             Bytes?  @db.Blob
+  user_name         String? @db.VarChar(255)
+  client_id         String? @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oauth_code {
+  authentication Bytes? @db.Blob
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oauth_refresh_token {
+  token_id       String? @db.VarChar(255)
+  token          Bytes?  @db.Blob
+  authentication Bytes?  @db.Blob
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model organization_members {
+  id                    BigInt                      @id @default(autoincrement())
+  organization_id       BigInt?
+  title                 String                      @db.VarChar(20)
+  name                  String                      @default("") @db.VarChar(50)
+  email                 String?                     @default("") @db.VarChar(50)
+  phone_number          String?                     @default("") @db.VarChar(10)
+  status                organization_members_status @default(ACTIVE)
+  parked                Boolean                     @default(dbgenerated("b'0'")) @db.Bit(1)
+  address_number        String?                     @db.VarChar(20)
+  address_building_name String?                     @db.VarChar(50)
+  address_street        String?                     @db.VarChar(50)
+  address_subdistrict   String?                     @db.VarChar(50)
+  address_district      String?                     @db.VarChar(50)
+  address_province      String?                     @db.VarChar(50)
+  address_country       String?                     @db.VarChar(50)
+  address_zip_code      String?                     @db.VarChar(10)
+  updated_date          DateTime                    @db.DateTime(0)
+  created_date          DateTime                    @db.DateTime(0)
+  deleted_at            DateTime?                   @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model organization_subscribers {
+  id                     BigInt                           @id @default(autoincrement())
+  organization_id        BigInt?
+  organization_member_id BigInt?
+  status                 organization_subscribers_status?
+  title                  String?                          @db.VarChar(20)
+  name                   String?                          @db.VarChar(50)
+  email                  String?                          @db.VarChar(50)
+  phone_number           String?                          @db.VarChar(11)
+  license_plate_letter   String?                          @db.VarChar(8)
+  license_plate_number   String?                          @db.VarChar(8)
+  license_plate_province String?                          @db.VarChar(64)
+  start_date             DateTime                         @db.DateTime(0)
+  valid_through          DateTime                         @db.DateTime(0)
+  start_time             DateTime                         @default(dbgenerated("'00:00:00'")) @db.Time(0)
+  end_time               DateTime                         @default(dbgenerated("'00:00:00'")) @db.Time(0)
+  can_concurrent_parking Boolean                          @default(dbgenerated("b'0'")) @db.Bit(1)
+  remark                 String?                          @db.VarChar(100)
+  updated_date           DateTime?                        @db.DateTime(0)
+  created_date           DateTime?                        @db.DateTime(0)
+  deleted_at             DateTime?                        @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model organizations {
+  id            BigInt                       @id @default(autoincrement())
+  address_id    BigInt
+  subscriber_on organizations_subscriber_on?
+  name          String?                      @db.VarChar(100)
+  biller_id     String?                      @db.VarChar(20)
+  terminal_id   String?                      @db.VarChar(20)
+  updated_date  DateTime?                    @db.DateTime(0)
+  created_date  DateTime?                    @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model organizations_parking_lots {
+  id              BigInt    @id @default(autoincrement())
+  organization_id BigInt
+  parking_lot_id  BigInt
+  updated_date    DateTime? @db.DateTime(0)
+  created_date    DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_blacklists {
+  id                     BigInt                      @id @default(autoincrement())
+  parking_lot_id         BigInt
+  license_plate_letter   String                      @db.VarChar(3)
+  license_plate_number   String                      @db.VarChar(4)
+  license_plate_province String                      @db.VarChar(64)
+  type                   parking_lot_blacklists_type
+  description            String?                     @db.VarChar(100)
+  updated_date           DateTime?                   @db.DateTime(0)
+  created_date           DateTime?                   @db.DateTime(0)
+  deleted_at             DateTime?                   @db.DateTime(0)
+  last_modified_by       String?                     @db.VarChar(255)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_bluetooth_routers {
+  id                BigInt                                          @id @default(autoincrement())
+  parking_lot_id    BigInt
+  ip                String?                                         @db.VarChar(50)
+  connection_status parking_lot_bluetooth_routers_connection_status @default(CONNECTED)
+  mac               String?                                         @db.VarChar(50)
+  model             String?                                         @db.VarChar(50)
+  version           String?                                         @db.VarChar(50)
+  updated_date      DateTime?                                       @db.DateTime(0)
+  created_date      DateTime?                                       @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_bookings {
+  id                     BigInt                      @id @default(autoincrement())
+  parking_lot_id         BigInt?
+  parking_lot_space_id   BigInt?
+  mobile_user_id         BigInt?
+  expiry_time            BigInt
+  license_plate_letter   String?                     @db.VarChar(8)
+  license_plate_number   String?                     @db.VarChar(8)
+  license_plate_province String?                     @db.VarChar(64)
+  status                 parking_lot_bookings_status
+  type                   parking_lot_bookings_type
+  uuid                   String                      @default("") @db.VarChar(50)
+  booked_time            DateTime?                   @db.DateTime(0)
+  updated_date           DateTime?                   @db.DateTime(0)
+  created_date           DateTime?                   @db.DateTime(0)
+  is_notified            Boolean                     @default(dbgenerated("b'0'")) @db.Bit(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_cards {
+  id                    BigInt                    @id @default(autoincrement())
+  parking_lot_id        BigInt
+  parking_lot_member_id BigInt?
+  card_ref_id           String                    @db.VarChar(50)
+  card_rfid             String                    @db.VarChar(50)
+  status                parking_lot_cards_status? @default(INACTIVE)
+  updated_date          DateTime                  @db.DateTime(0)
+  created_date          DateTime                  @db.DateTime(0)
+  used                  Boolean                   @default(dbgenerated("b'0'")) @db.Bit(1)
+
+  @@unique([parking_lot_id, card_ref_id, card_rfid], map: "parking_lot_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_coupons {
+  id                    BigInt                                   @id @default(autoincrement())
+  code                  String?                                  @unique(map: "code") @db.Char(36)
+  parking_lot_id        BigInt
+  parking_lot_member_id BigInt?
+  role_member_id        BigInt?
+  mobile_user_id        BigInt?
+  amount                Int
+  type                  parking_lot_coupons_type
+  status                parking_lot_coupons_status
+  start_date            DateTime                                 @db.DateTime(0)
+  expiry_date           DateTime                                 @db.DateTime(0)
+  description           String?                                  @db.VarChar(100)
+  name                  String                                   @default("") @db.VarChar(100)
+  time_limit            Int?
+  max_time_limit        Int?
+  discount_quota_type   parking_lot_coupons_discount_quota_type?
+  is_unlimited          Boolean                                  @default(dbgenerated("b'1'")) @db.Bit(1)
+  updated_date          DateTime?                                @db.DateTime(0)
+  created_date          DateTime?                                @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_events {
+  id                                  BigInt    @id @default(autoincrement())
+  parking_lot_id                      BigInt
+  parking_lot_location_inventory_id   BigInt?
+  parking_lot_location_inventory_name String?   @db.VarChar(100)
+  parking_lot_inventory_id            BigInt?
+  parking_lot_inventory_name          String?   @db.VarChar(100)
+  event_type                          String?   @db.VarChar(32)
+  event_date                          DateTime  @db.DateTime(0)
+  user                                String?   @db.VarChar(100)
+  device                              String?   @db.VarChar(16)
+  action                              String?   @db.VarChar(64)
+  description                         String?   @db.LongText
+  updated_date                        DateTime? @db.DateTime(0)
+  created_date                        DateTime? @db.DateTime(0)
+  local_id                            BigInt?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_gates {
+  id                       BigInt                                  @id @default(autoincrement())
+  parking_lot_id           BigInt
+  parking_lot_inventory_id BigInt                                  @unique(map: "parking_lot_inventory_id")
+  parking_lot_usage_id     BigInt?
+  barrier_status           parking_lot_gates_barrier_status
+  front_detector_status    parking_lot_gates_front_detector_status
+  under_detector_status    parking_lot_gates_under_detector_status
+  created_date             DateTime                                @db.DateTime(0)
+  updated_date             DateTime                                @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_group_spaces {
+  id                    BigInt   @id @default(autoincrement())
+  parking_lot_id        BigInt
+  name                  String   @db.VarChar(50)
+  priority              Int
+  daily_booking_quota   Int?
+  monthly_booking_quota Int?
+  created_date          DateTime @db.DateTime(0)
+  updated_date          DateTime @db.DateTime(0)
+
+  @@unique([parking_lot_id, name], map: "parking_lot_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_inventories {
+  id             BigInt                           @id
+  parking_lot_id BigInt
+  name           String                           @db.VarChar(100)
+  type           parking_lot_inventories_type
+  status         parking_lot_inventories_status
+  location       parking_lot_inventories_location
+  ip_address     String?                          @db.VarChar(16)
+  port           String?                          @db.VarChar(5)
+  model          String?                          @db.VarChar(50)
+  serial_number  String?                          @db.VarChar(100)
+  created_date   DateTime                         @db.DateTime(0)
+  updated_date   DateTime                         @db.DateTime(0)
+}
+
+model parking_lot_lift_reservations {
+  parking_lot_id BigInt   @id
+  data           Bytes
+  updated_date   DateTime @db.DateTime(0)
+  created_date   DateTime @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_lifts {
+  id             BigInt    @id @default(autoincrement())
+  parking_lot_id BigInt
+  name           String?   @db.VarChar(50)
+  width          Int
+  length         Int
+  height         Int
+  weight         Int
+  enabled        Boolean   @default(dbgenerated("b'1'")) @db.Bit(1)
+  updated_date   DateTime? @db.DateTime(0)
+  created_date   DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_location_inventories {
+  id                                BigInt                                @id
+  parking_lot_id                    BigInt
+  name                              String                                @db.VarChar(100)
+  type                              parking_lot_location_inventories_type
+  barrier_inventory_id              BigInt?
+  gate_display_inventory_id         BigInt?
+  license_plate_camera_inventory_id BigInt?
+  driver_camera_inventory_id        BigInt?
+  printer_inventory_id              BigInt?
+  tablet_inventory_id               BigInt?
+  desktop_inventory_id              BigInt?
+  alpr_server_inventory_id          BigInt?
+  created_date                      DateTime                              @db.DateTime(0)
+  updated_date                      DateTime                              @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_members {
+  id                              BigInt                     @id @default(autoincrement())
+  mobile_user_id                  BigInt?
+  parking_lot_id                  BigInt
+  parking_lot_group_space_id      BigInt?
+  role_member_id                  BigInt?
+  title                           String                     @db.VarChar(20)
+  name                            String                     @default("") @db.VarChar(50)
+  email                           String                     @default("") @db.VarChar(50)
+  phone_number                    String                     @default("") @db.VarChar(11)
+  status                          parking_lot_members_status @default(ACTIVE)
+  address_number                  String?                    @default("") @db.VarChar(50)
+  address_building_name           String?                    @db.VarChar(50)
+  address_street                  String?                    @db.VarChar(50)
+  address_subdistrict             String?                    @db.VarChar(50)
+  address_district                String?                    @db.VarChar(50)
+  address_province                String?                    @db.VarChar(50)
+  address_country                 String?                    @db.VarChar(50)
+  address_zip_code                String?                    @db.VarChar(10)
+  remark                          String?                    @db.VarChar(100)
+  remaining_daily_booking_quota   Int?
+  remaining_monthly_booking_quota Int?
+  updated_date                    DateTime                   @db.DateTime(0)
+  created_date                    DateTime                   @db.DateTime(0)
+  deleted_at                      DateTime?                  @db.DateTime(0)
+  last_modified_by                String?                    @db.VarChar(255)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_monthly_rates {
+  id             BigInt                              @id @default(autoincrement())
+  name           String                              @db.VarChar(100)
+  parking_lot_id BigInt
+  list_fee       Float
+  fee            Float
+  time_period    Int
+  time_unit      parking_lot_monthly_rates_time_unit
+  start_time     DateTime?                           @db.Time(0)
+  end_time       DateTime?                           @db.Time(0)
+  status         parking_lot_monthly_rates_status
+  updated_date   DateTime?                           @db.DateTime(0)
+  created_date   DateTime?                           @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_parking_spaces {
+  parking_lot_id            BigInt
+  parking_type              parking_lot_parking_spaces_parking_type
+  parking_sub_type          String                                  @db.VarChar(256)
+  total_space               Int
+  available_space           Int
+  total_space_monthly       Int
+  available_space_monthly   Int
+  total_space_temporary     Int
+  available_space_temporary Int
+  created_date              DateTime                                @db.DateTime(0)
+  updated_date              DateTime                                @db.DateTime(0)
+
+  @@id([parking_lot_id, parking_type, parking_sub_type])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_payments {
+  id             BigInt                        @id @default(autoincrement())
+  parking_lot_id BigInt
+  method         parking_lot_payments_method   @default(QR_CODE)
+  merchant       parking_lot_payments_merchant
+  api_key        String                        @db.VarChar(50)
+  api_secret     String                        @db.VarChar(50)
+  biller_id      String?                       @db.VarChar(50)
+  merchant_id    String?                       @db.VarChar(50)
+  partner_id     String?                       @db.VarChar(50)
+  partner_secret String?                       @db.VarChar(50)
+  terminal_id    String?                       @db.VarChar(50)
+  ref1           String                        @db.VarChar(50)
+  ref3           String                        @db.VarChar(50)
+  ref4           String?                       @db.VarChar(50)
+  created_date   DateTime                      @db.DateTime(0)
+  updated_date   DateTime                      @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_spaces {
+  id                               BigInt                               @id @default(autoincrement())
+  parking_lot_id                   BigInt
+  connection_status                parking_lot_spaces_connection_status @default(UNKNOWN)
+  locker_status                    parking_lot_spaces_locker_status
+  floor                            Int
+  floor_text                       String                               @db.VarChar(100)
+  status                           parking_lot_spaces_status?
+  type                             parking_lot_spaces_type
+  uuid                             String                               @default("") @db.VarChar(100)
+  block_id                         BigInt
+  block_id_text                    String                               @db.VarChar(10)
+  mac                              String?                              @unique(map: "mac") @db.VarChar(32)
+  key                              String?                              @db.VarChar(32)
+  battery                          Decimal?                             @db.Decimal(3, 2)
+  parking_lot_bluetooth_router_id  BigInt?
+  updated_date                     DateTime?                            @db.DateTime(0)
+  created_date                     DateTime?                            @db.DateTime(0)
+  parking_lot_group_space_name     String?                              @db.VarChar(50)
+  parking_lot_group_space_priority Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_staff_cutoffs {
+  id                    BigInt   @id @default(autoincrement())
+  parking_lot_id        BigInt
+  parking_lot_staff_id  BigInt
+  location_inventory_id BigInt
+  first_name            String   @db.VarChar(50)
+  last_name             String   @db.VarChar(50)
+  total                 Float
+  discount_total        Float
+  cash_drawer_total     Float
+  cash_drawer_begin     Float
+  cash_drawer_end       Float
+  cash_total            Float
+  qr_code_total         Float
+  credit_card_total     Float
+  emergency_total       Float
+  cutoff_date           DateTime @db.DateTime(0)
+  created_date          DateTime @db.DateTime(0)
+  updated_date          DateTime @db.DateTime(0)
+  local_id              BigInt
+}
+
+model parking_lot_staff_logs {
+  id                   BigInt    @id @default(autoincrement())
+  parking_lot_staff_id BigInt
+  parking_lot_id       BigInt
+  username             String    @db.VarChar(50)
+  logged_in_at         DateTime? @db.DateTime(0)
+  logged_out_at        DateTime? @db.DateTime(0)
+  updated_date         DateTime? @default(now()) @db.DateTime(0)
+  created_date         DateTime? @default(now()) @db.DateTime(0)
+  local_id             BigInt?
+}
+
+model parking_lot_staffs {
+  id             BigInt    @id @default(autoincrement())
+  parking_lot_id BigInt
+  first_name     String    @db.VarChar(50)
+  last_name      String    @db.VarChar(50)
+  username       String    @db.VarChar(50)
+  password       String    @db.VarChar(100)
+  mobile         String    @db.VarChar(20)
+  enabled        Boolean?  @default(dbgenerated("b'0'")) @db.Bit(1)
+  logged_in      Boolean?  @default(dbgenerated("b'0'")) @db.Bit(1)
+  updated_date   DateTime? @default(now()) @db.DateTime(0)
+  created_date   DateTime? @default(now()) @db.DateTime(0)
+  local_id       BigInt?
+  deleted_at     DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_subscriber_car_specifications {
+  id                        BigInt    @id @default(autoincrement())
+  parking_lot_id            BigInt?
+  parking_lot_subscriber_id BigInt?
+  type                      String    @db.VarChar(50)
+  brand                     String    @db.VarChar(50)
+  model                     String    @db.VarChar(50)
+  width                     Int
+  length                    Int
+  height                    Int
+  height_antenna            Int?      @default(0)
+  weight                    Int
+  edited                    Boolean?  @default(dbgenerated("b'0'")) @db.Bit(1)
+  updated_date              DateTime? @db.DateTime(0)
+  created_date              DateTime? @db.DateTime(0)
+
+  @@unique([parking_lot_id, parking_lot_subscriber_id], map: "UNIQUE KEY")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_subscribers {
+  id                         BigInt                          @id @default(autoincrement())
+  parking_lot_id             BigInt
+  parking_lot_member_id      BigInt?
+  host_member_id             BigInt?
+  parking_lot_card_id        BigInt?
+  mobile_user_id             BigInt?
+  parking_lot_group_space_id BigInt?
+  role_member_id             BigInt?
+  type                       parking_lot_subscribers_type    @default(LICENSE_PLATE)
+  status                     parking_lot_subscribers_status?
+  title                      String?                         @db.VarChar(20)
+  name                       String?                         @db.VarChar(50)
+  email                      String?                         @db.VarChar(50)
+  phone_number               String?                         @db.VarChar(11)
+  license_plate_letter       String?                         @db.VarChar(8)
+  license_plate_number       String?                         @db.VarChar(8)
+  license_plate_province     String?                         @db.VarChar(64)
+  virtual_card_rfid          String?                         @db.VarChar(50)
+  start_date                 DateTime                        @db.DateTime(0)
+  valid_through              DateTime                        @db.DateTime(0)
+  start_time                 DateTime                        @default(dbgenerated("'00:00:00'")) @db.Time(0)
+  end_time                   DateTime                        @default(dbgenerated("'00:00:00'")) @db.Time(0)
+  can_concurrent_parking     Boolean                         @default(dbgenerated("b'0'")) @db.Bit(1)
+  remark                     String?                         @db.VarChar(100)
+  accessible_lift            Boolean?                        @db.Bit(1)
+  car_brand                  String?                         @db.VarChar(50)
+  car_model                  String?                         @db.VarChar(50)
+  car_colour                 String?                         @db.VarChar(50)
+  updated_date               DateTime?                       @db.DateTime(0)
+  created_date               DateTime?                       @db.DateTime(0)
+  local_id                   BigInt?
+  deleted_at                 DateTime?                       @db.DateTime(0)
+  last_modified_by           String?                         @db.VarChar(255)
+
+  @@unique([license_plate_letter, license_plate_number, license_plate_province, parking_lot_id, deleted_at], map: "license_plate_unique")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_temporary_rates {
+  id               BigInt                                   @id @default(autoincrement())
+  parking_lot_id   BigInt
+  license_type     parking_lot_temporary_rates_license_type
+  rates            String                                   @default("") @db.VarChar(100)
+  free_period      Int
+  flat_rate        Float
+  flat_rate_period Int
+  description      String?                                  @db.VarChar(1000)
+  min              Float
+  max              Float
+  have_hourly_rate Boolean                                  @default(dbgenerated("b'0'")) @db.Bit(1)
+  have_flat_rate   Boolean                                  @default(dbgenerated("b'0'")) @db.Bit(1)
+  updated_date     DateTime?                                @db.DateTime(0)
+  created_date     DateTime?                                @db.DateTime(0)
+  agreement        String?                                  @db.VarChar(1000)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_usage_payments {
+  id                   BigInt                                     @id @default(autoincrement())
+  parking_lot_usage_id BigInt
+  start                DateTime?                                  @db.DateTime(0)
+  end                  DateTime?                                  @db.DateTime(0)
+  paid_time            DateTime?                                  @db.DateTime(0)
+  billing_time_spent   BigInt?
+  subtotal             Float?
+  discount             Float?
+  discount_type        parking_lot_usage_payments_discount_type?
+  total                Float?
+  parking_type         parking_lot_usage_payments_parking_type
+  status               parking_lot_usage_payments_status?
+  payment_method       parking_lot_usage_payments_payment_method?
+  updated_date         DateTime?                                  @db.DateTime(0)
+  created_date         DateTime?                                  @db.DateTime(0)
+  local_id             BigInt?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_usages {
+  id                             BigInt                                 @id @default(autoincrement())
+  parking_lot_id                 BigInt
+  parking_lot_subscriber_id      BigInt?
+  mobile_user_id                 BigInt?
+  organization_subscriber_id     BigInt?
+  member_name                    String?                                @db.VarChar(50)
+  ticket_id                      String?                                @db.VarChar(100)
+  role_member_name               String?                                @db.VarChar(100)
+  role_member_id                 BigInt?
+  blacklist_id                   BigInt?
+  usage_type                     parking_lot_usages_usage_type?
+  license_type                   parking_lot_usages_license_type        @default(NORMAL)
+  usage_status                   parking_lot_usages_usage_status?
+  checked_in                     DateTime?                              @db.DateTime(0)
+  checked_in_by                  parking_lot_usages_checked_in_by?
+  checked_in_user                String?                                @db.VarChar(100)
+  checked_in_description         String?                                @db.LongText
+  entrance_location_id           BigInt?
+  zone_checked_in                DateTime?                              @db.DateTime(0)
+  zone_checked_in_by             parking_lot_usages_zone_checked_in_by?
+  zone_checked_in_user           String?                                @db.VarChar(100)
+  zone_checked_in_description    String?                                @db.LongText
+  zone_entrance_location_id      BigInt?
+  zone_authorized                Boolean                                @default(dbgenerated("b'0'")) @db.Bit(1)
+  checked_out                    DateTime?                              @db.DateTime(0)
+  checked_out_by                 parking_lot_usages_checked_out_by?
+  checked_out_user               String?                                @db.VarChar(100)
+  checked_out_description        String?                                @db.LongText
+  exit_location_id               BigInt?
+  paid_time                      DateTime?                              @db.DateTime(0)
+  paid_amount                    Float?
+  license_plate_letter           String?                                @db.VarChar(8)
+  license_plate_number           String?                                @db.VarChar(8)
+  license_plate_province         String?                                @db.VarChar(64)
+  phone_number                   String?                                @db.VarChar(11)
+  slip_number                    String?                                @db.VarChar(16)
+  total_time_spent               BigInt?
+  billing_time_spent             BigInt?
+  fee_calculated_time            DateTime?                              @db.DateTime(0)
+  subtotal                       Float?
+  discount_applied_name          String?                                @db.VarChar(100)
+  discount_applied_date          DateTime?                              @db.DateTime(0)
+  discount                       Float?
+  discount_type                  parking_lot_usages_discount_type?
+  discount_total                 Float?
+  total                          Float?
+  overdue_time                   BigInt?
+  overdue_fee                    Float?
+  outstanding_balance            Float?
+  outstanding_balance_period     BigInt?
+  outstanding_balance_start_time DateTime?                              @db.DateTime(0)
+  parking_type                   parking_lot_usages_parking_type
+  is_member                      Boolean                                @default(dbgenerated("b'0'")) @db.Bit(1)
+  is_paid                        Boolean                                @default(dbgenerated("b'0'")) @db.Bit(1)
+  payment_method                 parking_lot_usages_payment_method?
+  bill_id                        String?                                @db.VarChar(50)
+  enable_card_payment            Boolean                                @default(dbgenerated("b'0'")) @db.Bit(1)
+  updated_date                   DateTime?                              @db.DateTime(0)
+  created_date                   DateTime?                              @db.DateTime(0)
+  parking_lot_booking_id         BigInt?
+  parking_lot_space_id           BigInt?
+  local_id                       BigInt?
+  is_card_lost                   Boolean                                @default(false)
+  tendered_amount                Float?
+  change                         Float?
+  locked                         Boolean?                               @default(dbgenerated("b'0'")) @db.Bit(1)
+  card_number                    String?                                @db.VarChar(20)
+  lift_checked_in                DateTime?                              @db.DateTime(0)
+  lift_checked_out               DateTime?                              @db.DateTime(0)
+  lift_queued_at                 DateTime?                              @db.Timestamp(0)
+  lift_zone                      String?                                @db.VarChar(32)
+  lift_cart_id                   String?                                @db.VarChar(32)
+  lift_checked_in_id             Int?
+  lift_checked_out_id            Int?
+
+  @@index([bill_id], map: "idx_billId")
+  @@index([bill_id], map: "idx_bill_id")
+  @@index([license_plate_number, license_plate_letter, license_plate_province], map: "idx_license_plate")
+  @@index([parking_lot_id], map: "idx_parking_lot")
+  @@index([slip_number], map: "idx_slip_number")
+  @@index([ticket_id], map: "idx_ticket_id")
+  @@index([updated_date], map: "idx_updated_date")
+  @@index([usage_type, usage_status, parking_type], map: "idx_usage_type")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lot_usages_archived {
+  id                             BigInt                                          @id @default(autoincrement())
+  parking_lot_id                 BigInt?
+  parking_lot_subscriber_id      BigInt?
+  mobile_user_id                 BigInt?
+  organization_subscriber_id     BigInt?
+  member_name                    String?                                         @db.VarChar(50)
+  ticket_id                      String?                                         @db.VarChar(100)
+  role_member_name               String?                                         @db.VarChar(100)
+  role_member_id                 BigInt?
+  usage_type                     parking_lot_usages_archived_usage_type?
+  usage_status                   parking_lot_usages_archived_usage_status?
+  checked_in                     DateTime?                                       @db.DateTime(0)
+  checked_in_by                  parking_lot_usages_archived_checked_in_by?
+  checked_in_user                String?                                         @db.VarChar(100)
+  checked_in_description         String?                                         @db.LongText
+  entrance_location_id           BigInt?
+  zone_checked_in                DateTime?                                       @db.DateTime(0)
+  zone_checked_in_by             parking_lot_usages_archived_zone_checked_in_by?
+  zone_checked_in_user           String?                                         @db.VarChar(100)
+  zone_checked_in_description    String?                                         @db.LongText
+  zone_entrance_location_id      BigInt?
+  zone_authorized                Boolean                                         @default(dbgenerated("b'0'")) @db.Bit(1)
+  checked_out                    DateTime?                                       @db.DateTime(0)
+  checked_out_by                 parking_lot_usages_archived_checked_out_by?
+  checked_out_user               String?                                         @db.VarChar(100)
+  checked_out_description        String?                                         @db.LongText
+  exit_location_id               BigInt?
+  paid_time                      DateTime?                                       @db.DateTime(0)
+  paid_amount                    Float?
+  license_plate_letter           String?                                         @db.VarChar(8)
+  license_plate_number           String?                                         @db.VarChar(8)
+  license_plate_province         String?                                         @db.VarChar(64)
+  phone_number                   String?                                         @db.VarChar(11)
+  slip_number                    String?                                         @db.VarChar(16)
+  total_time_spent               BigInt?
+  billing_time_spent             BigInt?
+  fee_calculated_time            DateTime?                                       @db.DateTime(0)
+  subtotal                       Float?
+  discount_applied_name          String?                                         @db.VarChar(100)
+  discount_applied_date          DateTime?                                       @db.DateTime(0)
+  discount                       Float?
+  discount_type                  parking_lot_usages_archived_discount_type?
+  discount_total                 Float?
+  total                          Float?
+  overdue_time                   BigInt?
+  overdue_fee                    Float?
+  outstanding_balance            Float?
+  outstanding_balance_period     BigInt?
+  outstanding_balance_start_time DateTime?                                       @db.DateTime(0)
+  parking_type                   parking_lot_usages_archived_parking_type?
+  is_member                      Boolean                                         @default(dbgenerated("b'0'")) @db.Bit(1)
+  is_paid                        Boolean                                         @default(dbgenerated("b'0'")) @db.Bit(1)
+  payment_method                 parking_lot_usages_archived_payment_method?
+  bill_id                        String?                                         @db.VarChar(50)
+  enable_card_payment            Boolean                                         @default(dbgenerated("b'0'")) @db.Bit(1)
+  updated_date                   DateTime?                                       @db.DateTime(0)
+  created_date                   DateTime?                                       @db.DateTime(0)
+  parking_lot_booking_id         BigInt?
+  parking_lot_space_id           BigInt?
+  local_id                       BigInt?
+  is_card_lost                   Boolean                                         @default(false)
+  tendered_amount                Float?
+  change                         Float?
+  locked                         Boolean?                                        @default(dbgenerated("b'0'")) @db.Bit(1)
+  card_number                    String?                                         @db.VarChar(20)
+  lift_checked_in                DateTime?                                       @db.DateTime(0)
+  lift_checked_out               DateTime?                                       @db.DateTime(0)
+  lift_queued_at                 DateTime?                                       @db.Timestamp(0)
+  lift_zone                      String?                                         @db.VarChar(32)
+  lift_cart_id                   String?                                         @db.VarChar(32)
+  lift_checked_in_id             Int?
+  lift_checked_out_id            Int?
+
+  @@index([bill_id], map: "idx_bill_id")
+  @@index([license_plate_number, license_plate_letter, license_plate_province], map: "idx_license_plate")
+  @@index([parking_lot_id], map: "idx_parking_lot")
+  @@index([slip_number], map: "idx_slip_number")
+  @@index([ticket_id], map: "idx_ticket_id")
+  @@index([usage_type, usage_status, parking_type], map: "idx_usage_type")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model parking_lots {
+  id                         BigInt               @id @default(autoincrement())
+  uuid                       String?              @unique(map: "uuid") @db.Char(36)
+  address_id                 BigInt
+  status                     parking_lots_status?
+  name                       String               @default("") @db.VarChar(100)
+  organization_name          String?              @db.VarChar(100)
+  description                String?              @db.VarChar(100)
+  open                       String?              @db.VarChar(50)
+  close                      String?              @db.VarChar(50)
+  available_time_description String?              @db.VarChar(1000)
+  number_car_can_park        Int?
+  enable_rate_temporary      Boolean?             @default(false)
+  enable_rate_monthly        Boolean?             @default(false)
+  enable_parking_temporary   Boolean?             @default(true)
+  enable_parking_subscriber  Boolean?             @default(false)
+  total_space                Int
+  available_space            Int
+  available_space_monthly    Int
+  space_monthly_total        Int
+  available_space_temporary  Int
+  space_temporary_total      Int
+  phone_number               String?              @db.VarChar(255)
+  facebook_url               String?              @db.VarChar(255)
+  type                       parking_lots_type
+  booking_time               Int?
+  updated_date               DateTime?            @db.DateTime(0)
+  created_date               DateTime?            @db.DateTime(0)
+  local_id                   BigInt?
+  card_lost_fine             Float                @default(0)
+  tax_id                     String?              @db.VarChar(20)
+  enable_parking_member      Boolean              @default(true)
+  default_subscriber_locked  Boolean              @default(false)
+  partner_logo_url           String?              @db.VarChar(1000)
+  has_gate                   Boolean              @default(false)
+  has_locker                 Boolean              @default(false)
+  has_lift                   Boolean              @default(false)
+  has_virtual_card           Boolean              @default(dbgenerated("b'0'")) @db.Bit(1)
+  has_1move                  Boolean              @default(dbgenerated("b'0'")) @db.Bit(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model password_reset_token {
+  id           BigInt    @id @default(autoincrement())
+  user_id      BigInt
+  token        String?   @db.VarChar(255)
+  is_reset     Boolean   @default(dbgenerated("b'0'")) @db.Bit(1)
+  expiry_date  DateTime? @db.DateTime(0)
+  updated_date DateTime? @db.DateTime(0)
+  created_date DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model payment_cards {
+  id               BigInt             @id @default(autoincrement())
+  mobile_user_id   BigInt
+  customer_id      String             @db.VarChar(50)
+  card_id          String             @db.VarChar(50)
+  type             payment_cards_type
+  brand            String?            @db.VarChar(20)
+  last_digits      String             @db.VarChar(4)
+  card_holder_name String             @db.VarChar(100)
+  expiration_date  String             @db.VarChar(5)
+  is_default       Boolean            @default(dbgenerated("b'0'")) @db.Bit(1)
+  created_date     DateTime           @db.DateTime(0)
+  updated_date     DateTime           @db.DateTime(0)
+  deleted_at       DateTime?          @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model privileges {
+  id           BigInt                  @id @unique(map: "id") @default(autoincrement())
+  name         String                  @db.VarChar(128)
+  level        Int
+  main_id      BigInt
+  label        String                  @db.VarChar(50)
+  client_group privileges_client_group
+  description  String?                 @db.VarChar(128)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model privileges_scopes {
+  privileges_id BigInt
+  scopes_id     BigInt
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model qr_payment_transactions {
+  id                BigInt                            @id @default(autoincrement())
+  parking_lot_id    BigInt?
+  invoice_id        BigInt
+  merchant          qr_payment_transactions_merchant?
+  ref_code          String                            @db.VarChar(100)
+  ref1              String                            @default("") @db.VarChar(100)
+  ref2              String                            @default("") @db.VarChar(100)
+  ref3              String?                           @db.VarChar(100)
+  ref4              String?                           @db.VarChar(200)
+  amount            Float
+  status            qr_payment_transactions_status
+  local_id          BigInt?
+  created_date      DateTime                          @db.DateTime(0)
+  updated_date      DateTime                          @db.DateTime(0)
+  latest_inquiry_at DateTime?                         @db.DateTime(0)
+
+  @@index([ref_code], map: "qr_payment_transactions_ref_code")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model report_averages {
+  id             BigInt                     @id @default(autoincrement())
+  parking_lot_id BigInt
+  time_unit      report_averages_time_unit?
+  type           report_averages_type?
+  value          BigInt?
+  data_size      BigInt?
+  updated_date   DateTime?                  @db.DateTime(0)
+  created_date   DateTime?                  @db.DateTime(0)
+}
+
+model report_overnights {
+  id                     BigInt                         @id @default(autoincrement())
+  parking_lot_id         BigInt
+  date                   DateTime                       @db.Date
+  license_plate_letter   String                         @db.VarChar(255)
+  license_plate_number   String                         @db.VarChar(255)
+  license_plate_province String                         @db.VarChar(255)
+  parking_type           report_overnights_parking_type
+  checked_in             DateTime                       @db.DateTime(0)
+  duration_day           BigInt
+  created_date           DateTime                       @default(now()) @db.Timestamp(0)
+
+  @@index([date, parking_lot_id], map: "idx_date_parking_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model role_discount_privileges {
+  role_name       String                                 @db.VarChar(50)
+  discount_amount Int
+  discount_type   role_discount_privileges_discount_type
+
+  @@id([role_name, discount_amount, discount_type])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model role_member_discounts {
+  id                   BigInt                                    @id @default(autoincrement())
+  role_member_id       BigInt
+  discount_amount      Int
+  discount_type        role_member_discounts_discount_type
+  discount_quota       Int
+  discount_quota_type  role_member_discounts_discount_quota_type
+  discount_name        String                                    @db.VarChar(100)
+  discount_description String?                                   @db.VarChar(100)
+  created_date         DateTime                                  @db.DateTime(0)
+  updated_date         DateTime                                  @db.DateTime(0)
+  deleted_at           DateTime?                                 @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model role_members {
+  id                        BigInt                   @id @default(autoincrement())
+  parking_lot_id            BigInt
+  role_member_name          String                   @db.VarChar(100)
+  role_member_code          String                   @db.VarChar(50)
+  free_of_charge_start_time DateTime?                @db.Time(0)
+  free_of_charge_end_time   DateTime?                @db.Time(0)
+  free_of_charge_duration   Int?
+  charge_type               role_members_charge_type
+  rates                     String                   @default("0") @db.VarChar(100)
+  max_member_amount         Int?
+  enable_private_zone       Boolean                  @default(dbgenerated("b'0'")) @db.Bit(1)
+  parked_car_limit          Int?
+  created_date              DateTime                 @db.DateTime(0)
+  updated_date              DateTime                 @db.DateTime(0)
+  deleted_at                DateTime?                @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model roles {
+  id           BigInt             @id @unique(map: "id") @default(autoincrement())
+  name         String             @unique(map: "name") @db.VarChar(50)
+  client_group roles_client_group
+  description  String             @unique(map: "description") @db.VarChar(100)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model roles_privileges {
+  roles_id      BigInt
+  privileges_id BigInt
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model scopes {
+  id          BigInt @id @unique(map: "id") @default(autoincrement())
+  resource    String @db.VarChar(50)
+  name        String @db.VarChar(50)
+  description String @db.VarChar(128)
+}
+
+model summary_report_cars {
+  parking_lot_id   BigInt
+  date             DateTime @db.Date
+  check_in_amount  Int      @default(0)
+  check_out_amount Int      @default(0)
+  created_date     DateTime @default(now()) @db.Timestamp(0)
+
+  @@id([parking_lot_id, date])
+}
+
+model summary_report_overnights {
+  parking_lot_id BigInt
+  date           DateTime @db.Date
+  amount         Int      @default(0)
+  created_date   DateTime @default(now()) @db.Timestamp(0)
+
+  @@id([parking_lot_id, date])
+}
+
+model summary_report_payments {
+  parking_lot_id BigInt
+  date           DateTime @db.Date
+  amount         Float    @default(0)
+  created_date   DateTime @default(now()) @db.Timestamp(0)
+
+  @@id([parking_lot_id, date])
+}
+
+model summary_report_privilege_zones {
+  parking_lot_id      BigInt
+  date                DateTime @db.Date
+  amount              Int      @default(0)
+  authorized_amount   Int      @default(0)
+  unauthorized_amount Int      @default(0)
+  created_date        DateTime @default(now()) @db.Timestamp(0)
+
+  @@id([parking_lot_id, date])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model system_messages {
+  id           BigInt                  @id @default(autoincrement())
+  purpose      system_messages_purpose
+  ref_id       BigInt
+  data         Bytes
+  created_date DateTime                @db.DateTime(0)
+  updated_date DateTime                @db.DateTime(0)
+
+  @@unique([purpose, ref_id], map: "purpose")
+}
+
+model telescope_entries {
+  sequence                BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid                    String                   @unique(map: "telescope_entries_uuid_unique") @db.Char(36)
+  batch_id                String                   @db.Char(36)
+  family_hash             String?                  @db.VarChar(255)
+  should_display_on_index Boolean                  @default(true)
+  type                    String                   @db.VarChar(20)
+  content                 String                   @db.LongText
+  created_at              DateTime?                @db.DateTime(0)
+  telescope_entries_tags  telescope_entries_tags[] @ignore
+
+  @@index([batch_id], map: "telescope_entries_batch_id_index")
+  @@index([created_at], map: "telescope_entries_created_at_index")
+  @@index([family_hash], map: "telescope_entries_family_hash_index")
+  @@index([type, should_display_on_index], map: "telescope_entries_type_should_display_on_index_index")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model telescope_entries_tags {
+  entry_uuid        String            @db.Char(36)
+  tag               String            @db.VarChar(255)
+  telescope_entries telescope_entries @relation(fields: [entry_uuid], references: [uuid], onDelete: Cascade, onUpdate: Restrict, map: "telescope_entries_tags_entry_uuid_foreign")
+
+  @@index([entry_uuid, tag], map: "telescope_entries_tags_entry_uuid_tag_index")
+  @@index([tag], map: "telescope_entries_tags_tag_index")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model telescope_monitoring {
+  tag String @db.VarChar(255)
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model token_black_list {
+  jti             String  @id @unique(map: "jti") @db.VarChar(255)
+  user_id         BigInt
+  expires         BigInt
+  is_black_listed Boolean @default(dbgenerated("b'1'")) @db.Bit(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_favorite_parking_lot {
+  id             BigInt    @id @unique(map: "id") @default(autoincrement())
+  username       String    @default("") @db.VarChar(50)
+  parking_lot_id BigInt
+  updated_date   DateTime? @db.DateTime(0)
+  created_date   DateTime? @db.DateTime(0)
+}
+
+model user_organizations {
+  user_id         BigInt    @id @unique(map: "user_id")
+  organization_id BigInt
+  updated_date    DateTime? @db.DateTime(0)
+  created_date    DateTime? @db.DateTime(0)
+}
+
+model user_parking_lots {
+  user_id        BigInt
+  parking_lot_id BigInt
+  updated_date   DateTime? @db.DateTime(0)
+  created_date   DateTime? @db.DateTime(0)
+
+  @@id([user_id, parking_lot_id])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_roles {
+  user_id BigInt
+  roles   String @db.VarChar(50)
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_vehicles {
+  id                                  BigInt               @id @default(autoincrement())
+  mobile_user_id                      BigInt
+  license_plate_letter                String?              @db.VarChar(8)
+  license_plate_number                String?              @db.VarChar(8)
+  license_plate_province              String?              @db.VarChar(64)
+  status                              user_vehicles_status
+  remark                              String?              @db.LongText
+  id_card_image_url                   String?              @db.VarChar(256)
+  license_plate_image_url             String?              @db.VarChar(256)
+  vehicle_registration_book_image_url String?              @db.VarChar(256)
+  updated_date                        DateTime?            @db.DateTime(0)
+  created_date                        DateTime?            @db.DateTime(0)
+  deleted_at                          DateTime?            @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model users {
+  id                      BigInt    @id @unique(map: "id") @default(autoincrement())
+  username                String    @unique(map: "username") @default("") @db.VarChar(50)
+  name                    String    @default("") @db.VarChar(50)
+  phone_number            String?   @db.VarChar(11)
+  default_card_id         String?   @db.VarChar(20)
+  password                String    @default("") @db.VarChar(100)
+  accepted_term           Boolean   @default(dbgenerated("b'1'")) @db.Bit(1)
+  enabled                 Boolean   @default(dbgenerated("b'1'")) @db.Bit(1)
+  credentials_non_expired Boolean   @default(dbgenerated("b'1'")) @db.Bit(1)
+  account_non_locked      Boolean   @default(dbgenerated("b'1'")) @db.Bit(1)
+  account_non_expired     Boolean   @default(dbgenerated("b'1'")) @db.Bit(1)
+  updated_date            DateTime? @db.DateTime(0)
+  created_date            DateTime? @db.DateTime(0)
+}
+
+enum addresses_purpose {
+  PARKING_LOT
+  ORGANIZATION
+}
+
+enum parking_lot_parking_spaces_parking_type {
+  GATE
+  LOCKER
+  LIFT
+}
+
+enum system_messages_purpose {
+  PARKING_LOT_FACILITIES
+  PARKING_LOT_BOOKING_CONDITIONS
+}
+
+enum files_purpose {
+  USER_PROFILE
+  ID_CARD
+  LICENSE_PLATE
+  VEHICLE_REG_BOOK
+  PARKING_LOT
+  PARKING_LOT_USAGE
+  PARKING_LOT_USAGE_CHECKIN
+  PARKING_LOT_USAGE_CHECKOUT
+  PARKING_LOT_USAGE_CHECKIN_LICENSE_PLATE
+  PARKING_LOT_USAGE_CHECKIN_DRIVER
+  PARKING_LOT_USAGE_ZONE_CHECKIN_LICENSE_PLATE
+  PARKING_LOT_USAGE_ZONE_CHECKIN_DRIVER
+  PARKING_LOT_USAGE_CHECKOUT_LICENSE_PLATE
+  PARKING_LOT_USAGE_CHECKOUT_DRIVER
+}
+
+enum organizations_subscriber_on {
+  ORGANIZATION
+  PARKING
+  MEMBER
+}
+
+enum parking_lot_payments_method {
+  QR_CODE
+  DEEPLINK
+}
+
+enum parking_lot_spaces_connection_status {
+  UNKNOWN
+  DISCONNECTED
+  CONNECTED
+}
+
+enum parking_lot_temporary_rates_license_type {
+  NORMAL
+  BUSES
+  OVERNIGHT
+}
+
+enum report_averages_time_unit {
+  HOUR
+  DAY
+  WEEK
+  MONTH
+}
+
+enum role_discount_privileges_discount_type {
+  HOUR
+  PRICE
+  FREE
+}
+
+enum roles_client_group {
+  PARKING
+  SASIN_PARKING
+  ORGANIZATION
+  MOBILE
+  ADMIN
+  DESKTOP
+  TRUSTED
+  VALIDATION
+}
+
+enum organization_subscribers_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum parking_lot_bluetooth_routers_connection_status {
+  UNKNOWN
+  DISCONNECTED
+  CONNECTED
+}
+
+enum parking_lot_inventories_type {
+  BARRIER
+  GATE_DISPLAY
+  LICENSE_PLATE_CAMERA
+  DRIVER_CAMERA
+  PRINTER
+  TABLET
+  DESKTOP
+  ALPR_SERVER
+}
+
+enum parking_lot_location_inventories_type {
+  ENTRANCE
+  ZONE_ENTRANCE
+  EXIT
+}
+
+enum parking_lot_payments_merchant {
+  SCB
+  KBANK
+  KTB
+  BBL
+  BAY
+  INET
+  UNKNOWN
+}
+
+enum parking_lot_spaces_locker_status {
+  EMPTY
+  LOCKED
+  UNLOCK
+  UNKNOW
+  ERROR
+}
+
+enum parking_lots_status {
+  ACTIVE
+  INACTIVE
+  HIDDEN
+}
+
+enum qr_payment_transactions_merchant {
+  SCB
+  KBANK
+  KTB
+  BBL
+  BAY
+}
+
+enum report_averages_type {
+  PARKING_LOT_USAGE_COUNT
+  PARKING_LOT_USAGE_REVENUE
+  TOTAL_REVENUE
+}
+
+enum role_member_discounts_discount_type {
+  PRICE
+  HOUR
+  FREE
+}
+
+enum discounts_type {
+  HOUR
+  PRICE
+  FREE
+}
+
+enum parking_lot_gates_barrier_status {
+  OPEN
+  CLOSE
+  UNKNOWN
+}
+
+enum parking_lot_inventories_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum payment_cards_type {
+  CREDIT_CARD
+  DEBIT_CARD
+  PREPAID_CARD
+  UNKNOWN
+}
+
+enum discounts_status {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum invoice_items_type {
+  PARKING_LOT_USAGE
+  OUTSTANDING_BALANCE
+  SUBSCRIPTION
+  WALLET
+  CARD_LOST_FINE
+  OVERNIGHT_FINE
+}
+
+enum parking_lot_blacklists_type {
+  SOFT
+  HARD
+}
+
+enum parking_lot_cards_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum parking_lot_gates_front_detector_status {
+  DETECTED
+  UNDETECTED
+  UNKNOWN
+}
+
+enum parking_lot_inventories_location {
+  ENTRANCE
+  ZONE_ENTRANCE
+  EXIT
+}
+
+enum privileges_client_group {
+  PARKING
+  SASIN_PARKING
+  ORGANIZATION
+  MOBILE
+  ADMIN
+  DESKTOP
+  TRUSTED
+}
+
+enum role_member_discounts_discount_quota_type {
+  DAILY
+  WEEKLY
+  MONTHLY
+  UNLIMITED
+}
+
+enum user_vehicles_status {
+  APPROVED
+  REJECTED
+  PENDING
+}
+
+enum discounts_applied_from {
+  ADMIN
+  CUSTOMER
+}
+
+enum organization_members_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum parking_lot_gates_under_detector_status {
+  DETECTED
+  UNDETECTED
+  UNKNOWN
+}
+
+enum parking_lot_monthly_rates_time_unit {
+  MONTHLY
+  WEEKLY
+}
+
+enum parking_lot_spaces_status {
+  AVAILABLE
+  RESERVED
+  PARKED
+  PARKING
+  UNKNOW
+  ERROR
+}
+
+enum report_overnights_parking_type {
+  TEMPORARY
+  SUBSCRIBER
+  MEMBER
+  PRE_REGISTER_VISITOR
+  VISITOR
+  BLACKLIST
+}
+
+enum invoice_transactions_status {
+  SUCCESS
+  UNSUCCESS
+  PENDING
+  TIMEOUT
+  CANCEL
+}
+
+enum parking_lot_coupons_type {
+  HOUR
+  PRICE
+  FREE
+}
+
+enum parking_lot_spaces_type {
+  LOCKABLE
+  UNLOCKABLE
+}
+
+enum role_members_charge_type {
+  CHARGE
+  FREE
+  CHARGE_LATER
+}
+
+enum discounts_applied_channel {
+  BACKOFFICE
+  WEB
+  MOBILE
+}
+
+enum invoice_items_discount_type {
+  HOUR
+  PRICE
+  FREE
+}
+
+enum invoices_payment_method {
+  CASH
+  QR_CODE
+  WALLET
+  CREDIT_DEBIT
+  DEEPLINK
+}
+
+enum parking_lot_bookings_status {
+  BOOKED
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
+enum parking_lot_coupons_status {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum parking_lot_subscribers_type {
+  LICENSE_PLATE
+  VIRTUAL_CARD
+  ONEMOVE
+}
+
+enum parking_lot_usage_payments_discount_type {
+  HOUR
+  PRICE
+  FREE
+}
+
+enum invoice_transactions_payment_method {
+  CASH
+  QR_CODE
+  WALLET
+  CREDIT_DEBIT
+}
+
+enum parking_lot_bookings_type {
+  SPACE
+  CAPACITY
+}
+
+enum parking_lot_members_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum parking_lot_monthly_rates_status {
+  ACTIVE
+  INACTIVE
+  HIDDEN
+}
+
+enum parking_lot_subscribers_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum parking_lot_usages_archived_usage_type {
+  GATE
+  LOCKER
+  LIFT
+  ONEMOVE
+}
+
+enum parking_lot_usage_payments_parking_type {
+  TEMPORARY
+  SUBSCRIBER
+  MEMBER
+  PRE_REGISTER_VISITOR
+  VISITOR
+}
+
+enum parking_lot_usages_usage_type {
+  GATE
+  LOCKER
+  LIFT
+  ONEMOVE
+}
+
+enum parking_lot_usages_archived_usage_status {
+  PARKED
+  COMPLETED
+  BOOKED
+  EXPIRED
+  CANCELLED
+}
+
+enum qr_payment_transactions_status {
+  CREATED
+  PAID
+  EXPIRED
+  CANCELLED
+  VOIDED
+}
+
+enum discounts_bill_type {
+  MEDICINE
+  SERVICE
+}
+
+enum parking_lot_usage_payments_status {
+  SUCCESS
+  UNSUCCESS
+  PENDING
+  TIMEOUT
+  UNPAID
+}
+
+enum parking_lot_usages_license_type {
+  NORMAL
+  BUSES
+  OVERNIGHT
+}
+
+enum parking_lot_usage_payments_payment_method {
+  CASH
+  QR_CODE
+  WALLET
+  CREDIT_DEBIT
+}
+
+enum parking_lot_usages_usage_status {
+  PARKED
+  COMPLETED
+  BOOKED
+  EXPIRED
+  CANCELLED
+}
+
+enum parking_lot_usages_archived_checked_in_by {
+  ALPR
+  POS
+  MOBILE
+}
+
+enum invoices_latest_status {
+  SUCCESS
+  UNSUCCESS
+  PENDING
+  TIMEOUT
+  CANCEL
+}
+
+enum parking_lot_usages_checked_in_by {
+  ALPR
+  POS
+  MOBILE
+}
+
+enum parking_lot_coupons_discount_quota_type {
+  DAILY
+  WEEKLY
+  MONTHLY
+  UNLIMITED
+}
+
+enum parking_lot_usages_archived_zone_checked_in_by {
+  ALPR
+  POS
+  MOBILE
+}
+
+enum parking_lot_usages_zone_checked_in_by {
+  ALPR
+  POS
+  MOBILE
+}
+
+enum parking_lot_usages_archived_checked_out_by {
+  ALPR
+  POS
+  MOBILE
+}
+
+enum parking_lots_type {
+  INDOOR
+  OUTDOOR
+  UNKNOWN
+}
+
+enum parking_lot_usages_checked_out_by {
+  ALPR
+  POS
+  MOBILE
+}
+
+enum parking_lot_usages_archived_discount_type {
+  HOUR
+  PRICE
+  FREE
+}
+
+enum parking_lot_usages_discount_type {
+  HOUR
+  PRICE
+  FREE
+}
+
+enum parking_lot_usages_archived_parking_type {
+  TEMPORARY
+  SUBSCRIBER
+  MEMBER
+  PRE_REGISTER_VISITOR
+  VISITOR
+}
+
+enum parking_lot_usages_parking_type {
+  TEMPORARY
+  SUBSCRIBER
+  MEMBER
+  PRE_REGISTER_VISITOR
+  VISITOR
+  BLACKLIST
+}
+
+enum parking_lot_usages_archived_payment_method {
+  CASH
+  QR_CODE
+  WALLET
+  CREDIT_DEBIT
+}
+
+enum parking_lot_usages_payment_method {
+  CASH
+  QR_CODE
+  WALLET
+  CREDIT_DEBIT
+}
